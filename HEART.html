@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>:>>></title>
+    <style>
+        body {
+            margin: 0; /* Remove default margin */
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #000; /* Set background to black for galaxy effect */
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            flex-direction: column;
+            height: 100vh; /* Full viewport height */
+            position: relative; /* Position relative for absolute elements */
+        }
+        h1 {
+            color: white; /* Text color */
+            z-index: 10; /* Ensure text is above the canvas */
+            position: absolute; /* Keep title above canvas */
+            top: 10%; /* Position the text above the heart */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Center the text perfectly */
+            font-family: Arial, sans-serif; /* Use a clean font */
+            text-align: center; /* Center the text */
+            text-shadow: 0 0 5px rgba(173, 216, 230, 0.8), /* Light blue glow */
+                         0 0 10px rgba(173, 216, 230, 0.8), /* Wider glow */
+                         0 0 15px rgba(173, 216, 230, 0.8); /* Even wider glow */
+            opacity: 0; /* Initially hidden */
+            transition: opacity 1s ease; /* Transition effect */
+        }
+        canvas {
+            position: absolute; /* Positioning the canvases on top of each other */
+            top: 0; /* Align to the top */
+            left: 0; /* Align to the left */
+        }
+        button {
+            padding: 10px 20px; /* Button padding */
+            font-size: 20px; /* Button text size */
+            cursor: pointer; /* Change cursor to pointer on hover */
+            background-color: #00f7ff; /* Button color */
+            border: none; /* Remove default border */
+            border-radius: 5px; /* Rounded corners */
+            color: white; /* Button text color */
+            z-index: 10; /* Ensure button is above canvas */
+            position: relative; /* Position relative for styling */
+            transition: background-color 0.3s; /* Smooth background color change */
+        }
+        button:hover {
+            background-color: #007a7a; /* Darken button on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>I LOVE YOUU, LOVEEE :>>></h1>
+    <button id="startButton">Click Me :>>></button>
+    <audio id="song">
+        <source src="RIDLEY.mp3" type="audio/mpeg">
+        Your browser does not support the audio tag.
+    </audio>
+    <canvas id="galaxyCanvas"></canvas>
+    <canvas id="heartCanvas"></canvas>
+
+    <script>
+        const audio = document.getElementById("song");
+        const title = document.querySelector("h1");
+        const button = document.getElementById("startButton");
+
+        // Function to handle button click
+        button.addEventListener("click", () => {
+            title.style.opacity = 1; // Fade in the title
+            playAudio(); // Play the audio
+            startDrawing(); // Start drawing the heart
+
+            button.style.display = "none"; // Hide the button after clicking
+        });
+
+        // Function to play audio
+        function playAudio() {
+            audio.currentTime = 0; // Start from the beginning of the audio
+            audio.play();
+        }
+
+        const galaxyCanvas = document.getElementById('galaxyCanvas');
+        const galaxyCtx = galaxyCanvas.getContext('2d');
+        const heartCanvas = document.getElementById('heartCanvas');
+        const heartCtx = heartCanvas.getContext('2d');
+
+        // Function to resize the canvas to fill the screen
+        function resizeCanvas() {
+            galaxyCanvas.width = window.innerWidth;
+            galaxyCanvas.height = window.innerHeight;
+            heartCanvas.width = window.innerWidth;
+            heartCanvas.height = window.innerHeight;
+        }
+
+        resizeCanvas(); // Set initial size
+
+        const totalPoints = 300; // Total number of points to generate
+        const points = []; // Array to hold the heart points
+        let drawnPoints = new Set(); // Set to keep track of drawn points
+        let starCount = 500; // Total stars to generate
+        let stars = []; // Array to hold star positions
+
+        const heartSize = 20; // Fixed size of the heart
+
+        // Function to create a galaxy-like gradient background
+        function drawGalaxyBackground() {
+            const gradient = galaxyCtx.createRadialGradient(galaxyCanvas.width / 2, galaxyCanvas.height / 2, 0, galaxyCanvas.width / 2, galaxyCanvas.height / 2, galaxyCanvas.width);
+            gradient.addColorStop(0, '#000022');
+            gradient.addColorStop(0.4, '#110033');
+            gradient.addColorStop(0.7, '#330066');
+            gradient.addColorStop(1, '#000000');
+            galaxyCtx.fillStyle = gradient;
+            galaxyCtx.fillRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
+        }
+
+        // Function to generate random stars
+        function generateStars() {
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * galaxyCanvas.width,
+                    y: Math.random() * galaxyCanvas.height,
+                    radius: Math.random() * 2, // Random radius for stars
+                    opacity: Math.random() // Initial opacity for twinkling
+                });
+            }
+        }
+
+        // Function to draw stars and apply twinkling effect
+        function drawStars() {
+            galaxyCtx.clearRect(0, 0, galaxyCanvas.width, galaxyCanvas.height); // Clear the galaxy canvas
+            drawGalaxyBackground(); // Redraw galaxy background
+            
+            stars.forEach(star => {
+                galaxyCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`; // Set color with opacity
+                galaxyCtx.beginPath();
+                galaxyCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                galaxyCtx.fill();
+
+                // Update star opacity for twinkling effect
+                star.opacity += (Math.random() * 0.05 - 0.025); // Randomly change opacity
+                if (star.opacity < 0) star.opacity = 0; // Clamp to 0
+                if (star.opacity > 1) star.opacity = 1; // Clamp to 1
+
+                // Randomly reappear stars when faded out
+                if (star.opacity === 0) {
+                    star.x = Math.random() * galaxyCanvas.width; // Reset position
+                    star.y = Math.random() * galaxyCanvas.height; // Reset position
+                    star.opacity = Math.random(); // Reset opacity
+                }
+            });
+
+            requestAnimationFrame(drawStars); // Request the next frame
+        }
+
+        // Heart shape function to compute points
+        function heartShape(t) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            return { x: x, y: y };
+        }
+
+        // Generate points for the heart shape
+        function generateHeartPoints() {
+            for (let i = 0; i < totalPoints; i++) {
+                const t = (Math.PI * 2 * i) / totalPoints; // Scale t to total points
+                const heartPoint = heartShape(t);
+                points.push({
+                    x: heartCanvas.width / 2 + heartPoint.x * heartSize, // Scale and center the heart shape
+                    y: heartCanvas.height / 2 - heartPoint.y * heartSize  // Invert Y-axis for correct orientation
+                });
+            }
+        }
+
+        // Start drawing
+        function startDrawing() {
+            heartCtx.clearRect(0, 0, heartCanvas.width, heartCanvas.height); // Clear the heart canvas
+            drawHeartLine(); // Start drawing lines
+        }
+
+        // Draw a random line to form the heart
+        function drawHeartLine() {
+            if (drawnPoints.size < totalPoints) {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * totalPoints); // Randomly pick a point index
+                } while (drawnPoints.has(randomIndex)); // Ensure it hasn't been drawn yet
+
+                drawnPoints.add(randomIndex); // Mark this point as drawn
+                const point = points[randomIndex]; // Get the point from the array
+
+                heartCtx.strokeStyle = '#00f7ff'; // Set color to cyan
+                heartCtx.lineWidth = 2;
+                heartCtx.beginPath();
+                heartCtx.moveTo(heartCanvas.width / 2, heartCanvas.height / 2); // Start from the center
+                heartCtx.lineTo(point.x, point.y); // Draw line to the heart point
+                heartCtx.stroke();
+
+                // Call drawHeartLine again after a short delay
+                setTimeout(drawHeartLine, 300); // Adjust delay for speed (milliseconds)
+            } else {
+                // Unmute and play the audio after the heart is drawn
+                audio.muted = false; // Unmute the audio
+                audio.play(); // Play the audio
+            }
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas(); // Resize the canvas
+            galaxyCtx.clearRect(0, 0, galaxyCanvas.width, galaxyCanvas.height); // Clear galaxy canvas
+            drawGalaxyBackground(); // Redraw the galaxy background
+            points.length = 0; // Clear existing heart points
+            generateHeartPoints(); // Regenerate heart points
+            drawnPoints.clear(); // Clear drawn points
+            startDrawing(); // Restart drawing
+        });
+
+        // Initial setup
+        resizeCanvas(); // Set initial size
+        drawGalaxyBackground(); // Draw initial galaxy background
+        generateStars(); // Generate stars
+        drawStars(); // Start twinkling stars
+        generateHeartPoints(); // Generate heart points
+        drawnPoints.clear(); // Clear drawn points
+    </script>
+</body>
+</html>
